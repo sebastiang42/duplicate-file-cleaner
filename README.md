@@ -1,0 +1,1 @@
+This script is meant to search through all files in a specified directory and identify duplicate files
