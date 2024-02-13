@@ -35,6 +35,7 @@ def find_duplicate_files_deep(directory):
 def find_duplicate_files_fast(directory):
     file_info_dict = defaultdict(list)
     duplicate_files = defaultdict(list)
+    folders_with_duplicates = defaultdict(set)
 
     # Count the total number of files
     total_files = sum([len(files) for _, _, files in os.walk(directory)])
@@ -56,6 +57,7 @@ def find_duplicate_files_fast(directory):
 
                 if len(file_info_dict[file_info]) > 1:
                     duplicate_files[file_info] = file_info_dict[file_info]
+                    folders_with_duplicates[foldername].update(file_info_dict[file_info])
 
                 pbar.update(1)  # Update progress bar
 
@@ -69,20 +71,30 @@ def find_duplicate_files_fast(directory):
                     hash_duplicates[file_hash].append(file_path)
                     pbar.update(1)
 
-    return hash_duplicates
+    return hash_duplicates, folders_with_duplicates
 
 if __name__ == "__main__":
     directory_path = r'C:/Users/sebas/Pictures/Seb Phone Pictures'
 
     # duplicates = find_duplicate_files_deep(directory_path)
-    duplicates = find_duplicate_files_fast(directory_path)
+    hash_duplicates, folders_with_duplicates = find_duplicate_files_fast(directory_path)
 
-    if duplicates:
+    if hash_duplicates:
         print("Duplicate Files:")
-        for file_hash, file_paths in duplicates.items():
+        for file_hash, file_paths in hash_duplicates.items():
             print(f"Hash: {file_hash}")
             for file_path in file_paths:
                 print(f"  - {file_path}")
             print("\n")
     else:
         print("No duplicate files found.")
+
+    if folders_with_duplicates:
+        print("Folders with Duplicates:")
+        for folder, files in folders_with_duplicates.items():
+            print(f"Folder: {folder}")
+            for file_path in files:
+                print(f"  - {file_path}")
+            print("\n")
+    else:
+        print("No folders with duplicates found.")
