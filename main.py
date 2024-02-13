@@ -1,6 +1,7 @@
 import os
 import hashlib
 from collections import defaultdict
+from tqdm import tqdm
 
 def get_file_hash(file_path):
     hasher = hashlib.sha256()
@@ -9,43 +10,72 @@ def get_file_hash(file_path):
             hasher.update(chunk)
     return hasher.hexdigest()
 
-def find_duplicate_files(directory):
-    file_hash_dict = {}
-    duplicate_files = {}
-
-    for foldername, subfolders, filenames in os.walk(directory):
-        print(foldername)
-        for filename in filenames:
-            file_path = os.path.join(foldername, filename)
-            file_hash = get_file_hash(file_path)
-
-            if file_hash in file_hash_dict:
-                duplicate_files.setdefault(file_hash, []).append(file_path)
-            else:
-                file_hash_dict[file_hash] = file_path
-
-    return {k: v for k, v in duplicate_files.items() if len(v) > 1}
-
-def find_duplicate_files(directory):
+def find_duplicate_files_deep(directory):
     file_hash_dict = defaultdict(list)
     duplicate_files = defaultdict(list)
 
-    for foldername, subfolders, filenames in os.walk(directory):
-        for filename in filenames:
-            file_path = os.path.join(foldername, filename)
-            file_hash = get_file_hash(file_path)
+    # Count the total number of files
+    total_files = sum([len(files) for _, _, files in os.walk(directory)])
 
-            file_hash_dict[file_hash].append(file_path)
+    with tqdm(total=total_files, desc="Searching for Duplicates") as pbar:
+        for foldername, subfolders, filenames in os.walk(directory):
+            for filename in filenames:
+                file_path = os.path.join(foldername, filename)
+                file_hash = get_file_hash(file_path)
 
-            if len(file_hash_dict[file_hash]) > 1:
-                duplicate_files[file_hash] = file_hash_dict[file_hash]
+                file_hash_dict[file_hash].append(file_path)
+
+                if len(file_hash_dict[file_hash]) > 1:
+                    duplicate_files[file_hash] = file_hash_dict[file_hash]
+
+                pbar.update(1)  # Update progress bar
 
     return {k: v for k, v in duplicate_files.items() if len(v) > 1}
 
-if __name__ == "__main__":
-    directory_path = r'C:/Users/sebas/Pictures/Seb Phone Pictures/test'
+def find_duplicate_files_fast(directory):
+    file_info_dict = defaultdict(list)
+    duplicate_files = defaultdict(list)
 
-    duplicates = find_duplicate_files(directory_path)
+    # Count the total number of files
+    total_files = sum([len(files) for _, _, files in os.walk(directory)])
+
+    with tqdm(total=total_files, desc="Searching for Duplicates") as pbar:
+        for foldername, subfolders, filenames in os.walk(directory):
+            for filename in filenames:
+                file_path = os.path.join(foldername, filename)
+                base_name, extension = os.path.splitext(filename)
+
+                # Check for variations in filenames (e.g., ' - Copy')
+                variations = [' - Copy', ' - Copy - Copy', '- Copy ', ' - Copy (1)']
+                for variation in variations:
+                    if variation in base_name:
+                        base_name = base_name.replace(variation, '')
+
+                file_info = (base_name, extension)
+                file_info_dict[file_info].append(file_path)
+
+                if len(file_info_dict[file_info]) > 1:
+                    duplicate_files[file_info] = file_info_dict[file_info]
+
+                pbar.update(1)  # Update progress bar
+
+    # Now, check file content only for files with the same base name and extension
+    hash_duplicates = defaultdict(list)
+    with tqdm(total=len(duplicate_files), desc="Calculating Hashes") as pbar:
+        for file_info, file_paths in duplicate_files.items():
+            if len(file_paths) > 1:
+                for file_path in file_paths:
+                    file_hash = get_file_hash(file_path)
+                    hash_duplicates[file_hash].append(file_path)
+                    pbar.update(1)
+
+    return hash_duplicates
+
+if __name__ == "__main__":
+    directory_path = r'C:/Users/sebas/Pictures/Seb Phone Pictures'
+
+    # duplicates = find_duplicate_files_deep(directory_path)
+    duplicates = find_duplicate_files_fast(directory_path)
 
     if duplicates:
         print("Duplicate Files:")
