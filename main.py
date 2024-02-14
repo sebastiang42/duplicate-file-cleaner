@@ -10,29 +10,10 @@ def get_file_hash(file_path):
             hasher.update(chunk)
     return hasher.hexdigest()
 
-def find_duplicate_files_deep(directory):
-    file_hash_dict = defaultdict(list)
-    duplicate_files = defaultdict(list)
+def get_file_size(file_path):
+    return os.path.getsize(file_path)
 
-    # Count the total number of files
-    total_files = sum([len(files) for _, _, files in os.walk(directory)])
-
-    with tqdm(total=total_files, desc="Searching for Duplicates") as pbar:
-        for foldername, subfolders, filenames in os.walk(directory):
-            for filename in filenames:
-                file_path = os.path.join(foldername, filename)
-                file_hash = get_file_hash(file_path)
-
-                file_hash_dict[file_hash].append(file_path)
-
-                if len(file_hash_dict[file_hash]) > 1:
-                    duplicate_files[file_hash] = file_hash_dict[file_hash]
-
-                pbar.update(1)  # Update progress bar
-
-    return {k: v for k, v in duplicate_files.items() if len(v) > 1}
-
-def find_duplicate_files_fast(directory):
+def find_duplicate_files(directory):
     file_info_dict = defaultdict(list)
     duplicate_files = defaultdict(list)
     folders_with_duplicates = defaultdict(set)
@@ -47,7 +28,7 @@ def find_duplicate_files_fast(directory):
                 base_name, extension = os.path.splitext(filename)
 
                 # Check for variations in filenames (e.g., ' - Copy')
-                variations = [' - Copy', ' - Copy - Copy', '- Copy ', ' - Copy (1)']
+                variations = ['- Copy', '- Copy (', '- Copy ', ' - Copy (1)']
                 for variation in variations:
                     if variation in base_name:
                         base_name = base_name.replace(variation, '')
@@ -73,8 +54,18 @@ def find_duplicate_files_fast(directory):
 
     return hash_duplicates, folders_with_duplicates
 
+def calculate_duplicate_size(hash_duplicates):
+    total_size = 0
+    for file_paths in hash_duplicates.values():
+        if len(file_paths) > 1:
+            file_size = get_file_size(file_paths[0])  # Use the size of the first file as they are duplicates
+            total_size += file_size * (len(file_paths) - 1)  # Add size for each additional duplicate
+
+    return total_size
+
 if __name__ == "__main__":
-    directory_path = r'C:/Users/sebas/Pictures/Seb Phone Pictures'
+    # directory_path = r'C:/Users/sebas/Pictures/Seb Phone Pictures'
+    directory_path = r'C:/Users/sebas/Pictures'
 
     # duplicates = find_duplicate_files_deep(directory_path)
     hash_duplicates, folders_with_duplicates = find_duplicate_files_fast(directory_path)
