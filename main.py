@@ -13,7 +13,7 @@ def get_file_hash(file_path):
 def get_file_size(file_path):
     return os.path.getsize(file_path)
 
-def find_duplicate_files(directory):
+def find_duplicate_files_fast(directory):
     file_info_dict = defaultdict(list)
     duplicate_files = defaultdict(list)
     folders_with_duplicates = defaultdict(set)
@@ -28,7 +28,7 @@ def find_duplicate_files(directory):
                 base_name, extension = os.path.splitext(filename)
 
                 # Check for variations in filenames (e.g., ' - Copy')
-                variations = ['- Copy', '- Copy (', '- Copy ', ' - Copy (1)']
+                variations = [' - Copy', ' - Copy - Copy', '- Copy ', ' - Copy (1)']
                 for variation in variations:
                     if variation in base_name:
                         base_name = base_name.replace(variation, '')
@@ -89,3 +89,6 @@ if __name__ == "__main__":
             print("\n")
     else:
         print("No folders with duplicates found.")
+
+    total_duplicate_size = calculate_duplicate_size(hash_duplicates)
+    print(f"Total size of duplicate files: {total_duplicate_size / (1024**2):.2f} MB")
