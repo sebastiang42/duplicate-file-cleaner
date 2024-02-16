@@ -56,15 +56,6 @@ def find_duplicate_files(directory):
 
     return hash_duplicates, folders_with_duplicates
 
-def calculate_duplicate_size(hash_duplicates):
-    total_size = 0
-    for file_paths in hash_duplicates.values():
-        if len(file_paths) > 1:
-            file_size = get_file_size(file_paths[0])  # Use the size of the first file as they are duplicates
-            total_size += file_size * (len(file_paths) - 1)  # Add size for each additional duplicate
-
-    return total_size
-
 class DuplicateFileViewer:
     def __init__(self, master):
         self.master = master
@@ -92,7 +83,7 @@ class DuplicateFileViewer:
 
         self.delete_files_button = tk.Button(self.master, text="Delete Selected Files", command=self.delete_selected_files)
         self.delete_files_button.pack(pady=5)
-
+    
     def load_directory(self):
         directory_path = filedialog.askdirectory()
         if directory_path:
@@ -101,15 +92,31 @@ class DuplicateFileViewer:
 
             self.duplicates_listbox.delete(0, tk.END)
 
+            # Create a list to store entries with file size for sorting
+            entries_with_size = []
+
             for file_hash, file_paths in hash_duplicates.items():
                 if len(file_paths) > 1:
-                    self.duplicates_listbox.insert(tk.END, f"Hash: {file_hash}")
+                    total_size_per_hash = 0
                     for file_path in file_paths:
-                        self.duplicates_listbox.insert(tk.END, f"  - {file_path}")
-                    self.duplicates_listbox.insert(tk.END, "\n")
+                        total_size_per_hash += get_file_size(file_path)
 
-            total_duplicate_size = calculate_duplicate_size(hash_duplicates)
-            self.total_size_label.config(text=f"Total Size of Duplicates: {total_duplicate_size / (1024**2):.2f} MB")
+                    entries_with_size.append((total_size_per_hash, f"Hash: {file_hash}", file_paths))
+
+            # Sort the list by file size in descending order
+            entries_with_size.sort(reverse=True, key=lambda x: x[0])
+
+            total_size = 0
+
+            for entry in entries_with_size:
+                total_size_per_hash, header, file_paths = entry
+                self.duplicates_listbox.insert(tk.END, f"{header} - Size: {total_size_per_hash / (1024**2):.2f} MB")
+                for file_path in file_paths:
+                    self.duplicates_listbox.insert(tk.END, f"  - {file_path} - Size: {total_size_per_hash / (len(file_paths) * 1024**2):.2f} MB")
+                self.duplicates_listbox.insert(tk.END, "\n")
+                total_size += total_size_per_hash
+
+            self.total_size_label.config(text=f"Total Size of Duplicates: {total_size / (1024**2):.2f} MB")
 
     def show_selected_files(self, event):
         selected_index = self.duplicates_listbox.curselection()
