@@ -61,10 +61,12 @@ class DuplicateFileViewer:
         self.master = master
         self.master.title("Duplicate File Viewer")
 
+        self.subdirectories_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
+        self.subdirectories_listbox.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+
         self.directory_path = tk.StringVar()
         self.duplicates_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
         self.duplicates_listbox.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
-        # self.duplicates_listbox.bind("<<ListboxSelect>>", self.show_selected_files)
 
         self.load_button = tk.Button(self.master, text="Load Directory", command=self.load_directory)
         self.load_button.pack(pady=5)
@@ -128,6 +130,13 @@ class DuplicateFileViewer:
         if directory_path:
             self.directory_path.set(directory_path)
             self.directory_path_label.config(text=f"Selected Directory: {directory_path}")
+
+            # Populate subdirectories list
+            self.subdirectories_listbox.delete(0, tk.END)
+            subdirectories = [f for f in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, f))]
+            for subdir in subdirectories:
+                self.subdirectories_listbox.insert(tk.END, subdir)
+            
             self.total_size_label.config(text="Total Size of Duplicates: ")  # Reset total size label
             self.duplicates_listbox.delete(0, tk.END)
             self.removable_files_listbox.delete(0, tk.END)
