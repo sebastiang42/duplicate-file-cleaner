@@ -69,6 +69,12 @@ class DuplicateFileViewer:
         self.load_button = tk.Button(self.master, text="Load Directory", command=self.load_directory)
         self.load_button.pack(pady=5)
 
+        self.directory_path_label = tk.Label(self.master, text="Selected Directory: None")
+        self.directory_path_label.pack(pady=5)
+
+        self.find_duplicates_button = tk.Button(self.master, text="Find Duplicates", command=self.find_duplicates)
+        self.find_duplicates_button.pack(pady=5)
+
         self.total_size_label = tk.Label(self.master, text="Total Size of Duplicates: ")
         self.total_size_label.pack(pady=5)
 
@@ -84,10 +90,9 @@ class DuplicateFileViewer:
         self.delete_files_button = tk.Button(self.master, text="Delete Selected Files", command=self.delete_selected_files)
         self.delete_files_button.pack(pady=5)
     
-    def load_directory(self):
-        directory_path = filedialog.askdirectory()
+    def find_duplicates(self):
+        directory_path = self.directory_path.get()
         if directory_path:
-            self.directory_path.set(directory_path)
             hash_duplicates, _ = find_duplicate_files(directory_path)
 
             self.duplicates_listbox.delete(0, tk.END)
@@ -117,6 +122,15 @@ class DuplicateFileViewer:
                 total_size += total_size_per_hash
 
             self.total_size_label.config(text=f"Total Size of Duplicates: {total_size / (1024**2):.2f} MB")
+    
+    def load_directory(self):
+        directory_path = filedialog.askdirectory()
+        if directory_path:
+            self.directory_path.set(directory_path)
+            self.directory_path_label.config(text=f"Selected Directory: {directory_path}")
+            self.total_size_label.config(text="Total Size of Duplicates: ")  # Reset total size label
+            self.duplicates_listbox.delete(0, tk.END)
+            self.removable_files_listbox.delete(0, tk.END)
 
     def show_selected_files(self, event):
         selected_index = self.duplicates_listbox.curselection()
@@ -130,7 +144,8 @@ class DuplicateFileViewer:
             file_path = self.duplicates_listbox.get(index)
             file_path = os.path.normpath(file_path)  # Normalize path
             file_path = file_path.lstrip(" -")  # Remove leading space and hyphen
-            self.removable_files_listbox.insert(tk.END, os.path.normpath(file_path))
+            file_path_end = file_path.find(" - Size: ")
+            self.removable_files_listbox.insert(tk.END, os.path.normpath(file_path[:file_path_end]))
 
     def remove_from_removal_list(self):
         selected_indices = self.removable_files_listbox.curselection()
