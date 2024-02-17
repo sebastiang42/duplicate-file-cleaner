@@ -234,7 +234,7 @@ class DuplicateFileViewer:
         selected_indices = self.removable_files_listbox.curselection()
         for index in selected_indices:
             self.removable_files_listbox.delete(index)
-
+    
     def delete_selected_files(self):
         selected_indices = self.removable_files_listbox.curselection()
 
@@ -244,15 +244,23 @@ class DuplicateFileViewer:
 
         confirmation = tk.messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete the selected files?")
         if confirmation:
+            # Create a list to store files to be deleted
+            files_to_delete = []
+
             for index in selected_indices:
                 file_path = self.removable_files_listbox.get(index)
+                files_to_delete.append(file_path)
+
+            # Remove selected files from the removal list
+            for file_path in files_to_delete:
+                self.removable_files_listbox.delete(self.removable_files_listbox.get(0, tk.END).index(file_path))
+
                 try:
                     os.remove(file_path)
                 except Exception as e:
                     tk.messagebox.showerror("Error", f"Error deleting file: {str(e)}")
 
             tk.messagebox.showinfo("Deletion Complete", "Selected files have been deleted.")
-            self.removable_files_listbox.delete(0, tk.END)
 
 if __name__ == "__main__":
     root = tk.Tk()
