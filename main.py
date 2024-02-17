@@ -15,7 +15,7 @@ def get_file_hash(file_path):
 def get_file_size(file_path):
     return os.path.getsize(file_path)
 
-def find_duplicate_files(directory):
+def find_duplicate_files(directory, ignored_subdirectories):
     file_info_dict = defaultdict(list)
     duplicate_files = defaultdict(list)
     folders_with_duplicates = defaultdict(set)
@@ -25,6 +25,9 @@ def find_duplicate_files(directory):
 
     with tqdm(total=total_files, desc="Searching for Duplicates") as pbar:
         for foldername, subfolders, filenames in os.walk(directory):
+            # Skip ignored subdirectories
+            subfolders[:] = [subfolder for subfolder in subfolders if subfolder not in ignored_subdirectories]
+
             for filename in filenames:
                 file_path = os.path.join(foldername, filename)
                 base_name, extension = os.path.splitext(filename)
@@ -99,6 +102,9 @@ class DuplicateFileViewer:
         self.ignore_folders_listbox.grid(row=7, column=0, padx=10, sticky=tk.NSEW)
         ignore_folders_xscrollbar.config(command=self.ignore_folders_listbox.xview)
 
+        self.remove_ignore_folders_button = tk.Button(self.master, text="Remove Selected Folders From Ignore List", command=self.remove_ignored_folders, font=default_font)
+        self.remove_ignore_folders_button.grid(row=9, column=0, pady=10, padx=10, sticky=tk.N)
+
         # Column 1 + 2
         self.find_duplicates_button = tk.Button(self.master, text="Find Duplicates", command=self.find_duplicates, font=default_font)
         self.find_duplicates_button.grid(row=0, column=1, pady=10, padx=10, sticky=tk.NS)
@@ -146,38 +152,52 @@ class DuplicateFileViewer:
             self.ignore_folders_listbox.insert(tk.END, folder_name)
             self.subdirectories_listbox.delete(index)
     
+    def remove_ignored_folders(self):
+        selected_indices = self.ignore_folders_listbox.curselection()
+        for index in selected_indices[::-1]:
+            folder_name = self.ignore_folders_listbox.get(index)
+            self.subdirectories_listbox.insert(tk.END, folder_name)
+            self.ignore_folders_listbox.delete(index)
+    
     def find_duplicates(self):
         directory_path = self.directory_path.get()
-        if directory_path:
-            hash_duplicates, _ = find_duplicate_files(directory_path)
+        if not directory_path:
+            messagebox.showwarning("Warning", "Please select a directory first.")
+            return
 
-            self.duplicates_listbox.delete(0, tk.END)
+        # Get a list of subdirectories to be ignored
+        ignored_subdirectories = [self.ignore_folders_listbox.get(index) for index in range(self.ignore_folders_listbox.size())]
 
-            # Create a list to store entries with file size for sorting
-            entries_with_size = []
+        # Use the find_duplicate_files function with the ignored_subdirectories parameter
+        hash_duplicates, _ = find_duplicate_files(directory_path, ignored_subdirectories)
 
-            for file_hash, file_paths in hash_duplicates.items():
-                if len(file_paths) > 1:
-                    total_size_per_hash = 0
-                    for file_path in file_paths:
-                        total_size_per_hash += get_file_size(file_path)
+        self.duplicates_listbox.delete(0, tk.END)
 
-                    entries_with_size.append((total_size_per_hash, f"Hash: {file_hash}", file_paths))
+        # Create a list to store entries with file size for sorting
+        entries_with_size = []
 
-            # Sort the list by file size in descending order
-            entries_with_size.sort(reverse=True, key=lambda x: x[0])
-
-            total_size = 0
-
-            for entry in entries_with_size:
-                total_size_per_hash, header, file_paths = entry
-                self.duplicates_listbox.insert(tk.END, f"{header} - Size: {total_size_per_hash / (1024**2):.2f} MB")
+        for file_hash, file_paths in hash_duplicates.items():
+            if len(file_paths) > 1:
+                total_size_per_hash = 0
                 for file_path in file_paths:
-                    self.duplicates_listbox.insert(tk.END, f"  - {file_path} - Size: {total_size_per_hash / (len(file_paths) * 1024**2):.2f} MB")
-                self.duplicates_listbox.insert(tk.END, "\n")
-                total_size += total_size_per_hash
+                    total_size_per_hash += get_file_size(file_path)
 
-            self.total_size_label.config(text=f"Total Size of Duplicates: {total_size / (1024**2):.2f} MB")
+                entries_with_size.append((total_size_per_hash, f"Hash: {file_hash}", file_paths))
+
+        # Sort the list by file size in descending order
+        entries_with_size.sort(reverse=True, key=lambda x: x[0])
+
+        total_size = 0
+
+        for entry in entries_with_size:
+            total_size_per_hash, header, file_paths = entry
+            self.duplicates_listbox.insert(tk.END, f"{header} - Size: {total_size_per_hash / (1024**2):.2f} MB")
+            for file_path in file_paths:
+                self.duplicates_listbox.insert(tk.END, f"  - {file_path} - Size: {total_size_per_hash / (len(file_paths) * 1024**2):.2f} MB")
+            self.duplicates_listbox.insert(tk.END, "\n")
+            total_size += total_size_per_hash
+
+        self.total_size_label.config(text=f"Total Size of Duplicates: {total_size / (1024**2):.2f} MB")
     
     def load_directory(self):
         directory_path = filedialog.askdirectory()
