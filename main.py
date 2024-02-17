@@ -61,36 +61,63 @@ class DuplicateFileViewer:
         self.master = master
         self.master.title("Duplicate File Viewer")
 
-        self.subdirectories_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
-        self.subdirectories_listbox.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
-
         self.directory_path = tk.StringVar()
-        self.duplicates_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
-        self.duplicates_listbox.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
 
+        # Column 0
         self.load_button = tk.Button(self.master, text="Load Directory", command=self.load_directory)
-        self.load_button.pack(pady=5)
+        self.load_button.grid(row=0, column=0, pady=5, sticky=tk.W)
 
         self.directory_path_label = tk.Label(self.master, text="Selected Directory: None")
-        self.directory_path_label.pack(pady=5)
+        self.directory_path_label.grid(row=1, column=0, pady=5, sticky=tk.W)
 
+        self.subdirectories_label = tk.Label(self.master, text="Subdirectories to be Searched:")
+        self.subdirectories_label.grid(row=2, column=0, pady=5, sticky=tk.W)
+
+        self.subdirectories_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
+        self.subdirectories_listbox.grid(row=3, column=0, rowspan=10, sticky=tk.NSEW)
+
+        self.ignore_folders_button = tk.Button(self.master, text="Ignore Selected Folders", command=self.ignore_selected_folders)
+        self.ignore_folders_button.grid(row=13, column=0, pady=5, sticky=tk.W)
+
+        self.subdirectories_ignored_label = tk.Label(self.master, text="Subdirectories to be Ignored:")
+        self.subdirectories_ignored_label.grid(row=14, column=0, pady=5, sticky=tk.W)
+
+        self.ignore_folders_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
+        self.ignore_folders_listbox.grid(row=15, column=0, rowspan=10, sticky=tk.NSEW)
+
+        # Column 1
         self.find_duplicates_button = tk.Button(self.master, text="Find Duplicates", command=self.find_duplicates)
-        self.find_duplicates_button.pack(pady=5)
+        self.find_duplicates_button.grid(row=0, column=1, pady=5, sticky=tk.W)
 
         self.total_size_label = tk.Label(self.master, text="Total Size of Duplicates: ")
-        self.total_size_label.pack(pady=5)
+        self.total_size_label.grid(row=1, column=1, pady=5, sticky=tk.W)
 
-        self.removable_files_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
-        self.removable_files_listbox.pack(side=tk.RIGHT, expand=True, fill=tk.BOTH)
-
+        self.duplicates_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
+        self.duplicates_listbox.grid(row=2, column=1, rowspan=50, sticky=tk.NSEW)
+        
+        # Column 2
         self.add_to_removal_button = tk.Button(self.master, text="Add to Removal List", command=self.add_to_removal_list)
-        self.add_to_removal_button.pack(pady=5)
+        self.add_to_removal_button.grid(row=0, column=2, pady=5, sticky=tk.W)
 
         self.remove_from_removal_button = tk.Button(self.master, text="Remove from Removal List", command=self.remove_from_removal_list)
-        self.remove_from_removal_button.pack(pady=5)
+        self.remove_from_removal_button.grid(row=1, column=2, pady=5, sticky=tk.W)
 
+        self.file_removal_label = tk.Label(self.master, text="Files to be Removed:")
+        self.file_removal_label.grid(row=2, column=2, pady=5, sticky=tk.W)
+
+        self.removable_files_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
+        self.removable_files_listbox.grid(row=3, column=2, rowspan=50, sticky=tk.NSEW)
+
+        # Column 3
         self.delete_files_button = tk.Button(self.master, text="Delete Selected Files", command=self.delete_selected_files)
-        self.delete_files_button.pack(pady=5)
+        self.delete_files_button.grid(row=0, column=3, pady=5, sticky=tk.W)
+    
+    def ignore_selected_folders(self):
+        selected_indices = self.subdirectories_listbox.curselection()
+        for index in selected_indices[::-1]:
+            folder_name = self.subdirectories_listbox.get(index)
+            self.ignore_folders_listbox.insert(tk.END, folder_name)
+            self.subdirectories_listbox.delete(index)
     
     def find_duplicates(self):
         directory_path = self.directory_path.get()
@@ -182,5 +209,9 @@ class DuplicateFileViewer:
 
 if __name__ == "__main__":
     root = tk.Tk()
+
+    # Set the initial window size
+    root.geometry("1200x900")
+
     app = DuplicateFileViewer(root)
     root.mainloop()
