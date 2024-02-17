@@ -63,54 +63,81 @@ class DuplicateFileViewer:
 
         self.directory_path = tk.StringVar()
 
+        # Set default font size
+        default_font = ("Helvetica", 12)
+        default_listbox_font = ("Helvetica", 10)
+
         # Column 0
-        self.load_button = tk.Button(self.master, text="Load Directory", command=self.load_directory)
-        self.load_button.grid(row=0, column=0, pady=5, sticky=tk.W)
+        self.load_button = tk.Button(self.master, text="Load Directory", command=self.load_directory, font=default_font)
+        self.load_button.grid(row=0, column=0, pady=10, padx=10, sticky=tk.NS)
 
-        self.directory_path_label = tk.Label(self.master, text="Selected Directory: None")
-        self.directory_path_label.grid(row=1, column=0, pady=5, sticky=tk.W)
+        self.directory_path_label = tk.Label(self.master, text="Selected Directory: None", font=default_font, wraplength=300)
+        self.directory_path_label.grid(row=1, column=0, pady=5, padx=10, sticky=tk.NSEW)
 
-        self.subdirectories_label = tk.Label(self.master, text="Subdirectories to be Searched:")
-        self.subdirectories_label.grid(row=2, column=0, pady=5, sticky=tk.W)
+        self.subdirectories_label = tk.Label(self.master, text="Subdirectories to be Searched:", font=default_font)
+        self.subdirectories_label.grid(row=2, column=0, pady=5, padx=10, sticky=tk.S)
 
-        self.subdirectories_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
-        self.subdirectories_listbox.grid(row=3, column=0, rowspan=10, sticky=tk.NSEW)
+        # Create a horizontal scrollbar for subdirectories_listbox
+        subdirectories_xscrollbar = tk.Scrollbar(self.master, orient=tk.HORIZONTAL)
+        subdirectories_xscrollbar.grid(row=4, column=0, padx=10, sticky=tk.W + tk.E + tk.N)
 
-        self.ignore_folders_button = tk.Button(self.master, text="Ignore Selected Folders", command=self.ignore_selected_folders)
-        self.ignore_folders_button.grid(row=13, column=0, pady=5, sticky=tk.W)
+        self.subdirectories_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED, font=default_listbox_font, width=40, height=20)
+        self.subdirectories_listbox.grid(row=3, column=0, padx=10, sticky=tk.NSEW)
+        subdirectories_xscrollbar.config(command=self.subdirectories_listbox.xview)
 
-        self.subdirectories_ignored_label = tk.Label(self.master, text="Subdirectories to be Ignored:")
-        self.subdirectories_ignored_label.grid(row=14, column=0, pady=5, sticky=tk.W)
+        self.ignore_folders_button = tk.Button(self.master, text="Ignore Selected Folders", command=self.ignore_selected_folders, font=default_font)
+        self.ignore_folders_button.grid(row=5, column=0, pady=10, padx=10, sticky=tk.N)
 
-        self.ignore_folders_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
-        self.ignore_folders_listbox.grid(row=15, column=0, rowspan=10, sticky=tk.NSEW)
+        self.subdirectories_ignored_label = tk.Label(self.master, text="Subdirectories to be Ignored:", font=default_font)
+        self.subdirectories_ignored_label.grid(row=6, column=0, pady=5, padx=10, sticky=tk.S)
 
-        # Column 1
-        self.find_duplicates_button = tk.Button(self.master, text="Find Duplicates", command=self.find_duplicates)
-        self.find_duplicates_button.grid(row=0, column=1, pady=5, sticky=tk.W)
+        # Create a horizontal scrollbar for ignore_folders_listbox
+        ignore_folders_xscrollbar = tk.Scrollbar(self.master, orient=tk.HORIZONTAL)
+        ignore_folders_xscrollbar.grid(row=8, column=0, padx=10, sticky=tk.W + tk.E + tk.N)
 
-        self.total_size_label = tk.Label(self.master, text="Total Size of Duplicates: ")
-        self.total_size_label.grid(row=1, column=1, pady=5, sticky=tk.W)
+        self.ignore_folders_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED, font=default_listbox_font, width=40, height=20)
+        self.ignore_folders_listbox.grid(row=7, column=0, padx=10, sticky=tk.NSEW)
+        ignore_folders_xscrollbar.config(command=self.ignore_folders_listbox.xview)
 
-        self.duplicates_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
-        self.duplicates_listbox.grid(row=2, column=1, rowspan=50, sticky=tk.NSEW)
-        
-        # Column 2
-        self.add_to_removal_button = tk.Button(self.master, text="Add to Removal List", command=self.add_to_removal_list)
-        self.add_to_removal_button.grid(row=0, column=2, pady=5, sticky=tk.W)
+        # Column 1 + 2
+        self.find_duplicates_button = tk.Button(self.master, text="Find Duplicates", command=self.find_duplicates, font=default_font)
+        self.find_duplicates_button.grid(row=0, column=1, pady=10, padx=10, sticky=tk.NS)
 
-        self.remove_from_removal_button = tk.Button(self.master, text="Remove from Removal List", command=self.remove_from_removal_list)
-        self.remove_from_removal_button.grid(row=1, column=2, pady=5, sticky=tk.W)
+        self.add_to_removal_button = tk.Button(self.master, text="Add to Removal List", command=self.add_to_removal_list, font=default_font)
+        self.add_to_removal_button.grid(row=0, column=2, pady=10, padx=10, sticky=tk.NS)
 
-        self.file_removal_label = tk.Label(self.master, text="Files to be Removed:")
-        self.file_removal_label.grid(row=2, column=2, pady=5, sticky=tk.W)
+        self.total_size_label = tk.Label(self.master, text="Total Size of Duplicates: ", font=default_font)
+        self.total_size_label.grid(row=1, column=1, columnspan=2, pady=5, padx=10, sticky=tk.NSEW)
 
-        self.removable_files_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED)
-        self.removable_files_listbox.grid(row=3, column=2, rowspan=50, sticky=tk.NSEW)
+        self.duplicates_label = tk.Label(self.master, text="Duplicate Files Found: ", font=default_font)
+        self.duplicates_label.grid(row=2, column=1, columnspan=2, pady=5, padx=10, sticky=tk.S)
+
+        # Create a horizontal scrollbar for duplicates_listbox
+        duplicates_xscrollbar = tk.Scrollbar(self.master, orient=tk.HORIZONTAL)
+        duplicates_xscrollbar.grid(row=9, column=1, columnspan=2, padx=10, sticky=tk.W + tk.E + tk.N)
+
+        self.duplicates_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED, font=default_listbox_font, width=85, xscrollcommand=duplicates_xscrollbar.set)
+        self.duplicates_listbox.grid(row=3, column=1, rowspan=6, columnspan=2, padx=10, sticky=tk.NSEW)
+        duplicates_xscrollbar.config(command=self.duplicates_listbox.xview)
 
         # Column 3
-        self.delete_files_button = tk.Button(self.master, text="Delete Selected Files", command=self.delete_selected_files)
-        self.delete_files_button.grid(row=0, column=3, pady=5, sticky=tk.W)
+        self.remove_from_removal_button = tk.Button(self.master, text="Remove from Removal List", command=self.remove_from_removal_list, font=default_font)
+        self.remove_from_removal_button.grid(row=1, column=3, pady=10, padx=10, sticky=tk.N)
+
+        self.file_removal_label = tk.Label(self.master, text="Files to be Removed:", font=default_font)
+        self.file_removal_label.grid(row=2, column=3, pady=5, padx=10, sticky=tk.S)
+
+        # Create a horizontal scrollbar for removable_files_listbox
+        removable_files_xscrollbar = tk.Scrollbar(self.master, orient=tk.HORIZONTAL)
+        removable_files_xscrollbar.grid(row=9, column=3, padx=10, sticky=tk.W + tk.E + tk.N)
+
+        self.removable_files_listbox = tk.Listbox(self.master, selectmode=tk.EXTENDED, font=default_listbox_font, width=85)
+        self.removable_files_listbox.grid(row=3, column=3, rowspan=6, padx=10, sticky=tk.NSEW)
+        removable_files_xscrollbar.config(command=self.removable_files_listbox.xview)
+
+        # Column 3
+        self.delete_files_button = tk.Button(self.master, text="Delete Selected Files", command=self.delete_selected_files, font=default_font)
+        self.delete_files_button.grid(row=0, column=3, pady=10, padx=10, sticky=tk.NS)
     
     def ignore_selected_folders(self):
         selected_indices = self.subdirectories_listbox.curselection()
@@ -211,7 +238,7 @@ if __name__ == "__main__":
     root = tk.Tk()
 
     # Set the initial window size
-    root.geometry("1200x900")
+    root.geometry("1600x1000")
 
     app = DuplicateFileViewer(root)
     root.mainloop()
