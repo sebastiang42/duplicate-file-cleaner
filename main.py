@@ -202,8 +202,10 @@ class DuplicateFileViewer:
             for file_path in file_paths:
                 self.duplicates_listbox.insert(tk.END, f"  - {file_path} - Size: {total_size_per_hash / (len(file_paths) * 1024**2):.2f} MB")
             self.duplicates_listbox.insert(tk.END, "\n")
-            total_size += total_size_per_hash
+            total_size += total_size_per_hash * (len(file_paths) - 1) / len(file_paths)
 
+        total_duplicates = sum((len(entry[2]) - 1) for entry in entries_with_size if len(entry[2]) > 1)
+        self.duplicates_label.config(text=f"Duplicate Files Found: {total_duplicates}")
         self.total_size_label.config(text=f"Total Size of Duplicates: {total_size / (1024**2):.2f} MB")
     
     def load_directory(self):
