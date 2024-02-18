@@ -25,11 +25,18 @@ def find_duplicate_files(directory, ignored_subdirectories):
 
     with tqdm(total=total_files, desc="Searching for Duplicates") as pbar:
         for foldername, subfolders, filenames in os.walk(directory):
-            # Skip ignored subdirectories
-            subfolders[:] = [subfolder for subfolder in subfolders if subfolder not in ignored_subdirectories]
+            # Convert foldername to a relative path
+            relative_foldername = os.path.relpath(foldername, directory)
+
+            # Skip ignored subdirectories and their contents
+            if relative_foldername in ignored_subdirectories:
+                pbar.update(len(filenames))
+                continue
 
             for filename in filenames:
-                file_path = os.path.join(foldername, filename)
+                file_path = os.path.join(relative_foldername, filename)
+                full_file_path = os.path.join(directory, file_path)  # Get the full file path
+
                 base_name, extension = os.path.splitext(filename)
 
                 # Check for variations in filenames (e.g., ' - Copy')
@@ -39,11 +46,11 @@ def find_duplicate_files(directory, ignored_subdirectories):
                         base_name = base_name.replace(variation, '')
 
                 file_info = (base_name, extension)
-                file_info_dict[file_info].append(file_path)
+                file_info_dict[file_info].append(full_file_path)
 
                 if len(file_info_dict[file_info]) > 1:
                     duplicate_files[file_info] = file_info_dict[file_info]
-                    folders_with_duplicates[foldername].update(file_info_dict[file_info])
+                    folders_with_duplicates[relative_foldername].update(file_info_dict[file_info])
 
                 pbar.update(1)  # Update progress bar
 
@@ -207,7 +214,7 @@ class DuplicateFileViewer:
 
             # Populate subdirectories list
             self.subdirectories_listbox.delete(0, tk.END)
-            subdirectories = [f for f in os.listdir(directory_path) if os.path.isdir(os.path.join(directory_path, f))]
+            subdirectories = [os.path.relpath(os.path.join(dp, dn), directory_path) for dp, dns, _ in os.walk(directory_path) for dn in dns]
             for subdir in subdirectories:
                 self.subdirectories_listbox.insert(tk.END, subdir)
             
@@ -266,7 +273,7 @@ if __name__ == "__main__":
     root = tk.Tk()
 
     # Set the initial window size
-    root.geometry("1600x1000")
+    root.geometry("1600x1080")
 
     app = DuplicateFileViewer(root)
     root.mainloop()
